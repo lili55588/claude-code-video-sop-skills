@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 临时
+*.tmp
+*.log
+
+# 🔴 密钥 / 凭证（绝不入仓）
+*xiaoyunqkey*
+*.key
+*.env
+*secret*
+*token*
+
+# 项目素材 / 大文件（仅技能与工具入仓，不含创作产物）
+*.mp4
+*.mov
+*.webm
+*.avi
+*.mkv
+*.png
+*.jpg
+*.jpeg
+逐帧自检/
+video_audit/
+pippit_outputs/
+pippit_runs/
+关键帧锚点/
