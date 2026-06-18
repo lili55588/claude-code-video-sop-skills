@@ -24,6 +24,13 @@
 - **感知哈希/嵌入 = 图片版差分**：**角度感知**，别 naive 比「正脸 vs 背影」（本就该差异大≠跑脸）；只对**有脸视图**用人脸嵌入比，或比**发型/服装区域**。
 - 检测产出的 **bbox 可自动填进「返修区域」**字段。
 
+**第二批工具契约（`image_asset_audit.py` v0.2 已落地 2026-06-18，与 Codex 树「Second-batch tool contract」对齐）**
+- 软信号槽位仅在引擎可用时填，**永不改 `part_a_status`**；升级仍须 Part B 视觉确认。
+- **感知哈希＝已接**：region/panel 域 `dhash`（full / center_80 / 宫格各格），`--ref-image` 比权威参考出 distance + review_hint（`REVIEW_DIFFERENCE`/`NEAR_MATCH_SIGNAL`），供重复/漂移/导错图/宫格逐格差分；**禁 naive 整图当身份/角度/内容判据**，工具自带 `angle_awareness=无人脸/人体嵌入` 免责；人脸/人体嵌入比对仍未接。
+- **OCR＝可选**：`--expect-text must-match:/incidental:` 接 P4 `exact_text+criticality`，走二钥（must-match + OCR 高置信不符 + 视觉确认才升 CONTENT_FAIL）；依赖 `pytesseract`+原生 Tesseract，缺则降级 `NOT_AVAILABLE`、工具照跑；无上游 exact-text 契约时 OCR 仅原始证据。
+- **水印＝OCR 派生**：角区 + 关键词启发式（`--watermark-keyword` 可补，默认含 dreamina/jimeng/seedance/pippit 等），非独立引擎；视觉确认前按 incidental/局部修候选。
+- **人脸＝推迟**：恒 `NOT_AVAILABLE`，除非项目反复需确定性人数；将来接也只报 count/bbox/遮挡过小/盲点，不做身份识别。
+
 ## 3 · Part B 视觉主判 + 反糊弄协议
 默认存疑；PASS 也要写正证据；怀疑项先穷举；二元勾选不写散文；看不清只降级（`ACCEPTABLE_RISK`/待复看），不默认 PASS。
 
@@ -65,4 +72,4 @@
 ## 边界
 - 工具只摆证据、不判分；**软信号不判死**；不 AI 重绘任何图/帧（本机像素）。
 - 不碰即梦上传规则、不碰小云雀 / Pippit 提交规则。
-- 闸10 的 Part A 工具是两树共享 `tools\video-frame-audit\frame_audit.py`；**闸2b/9 的图片 Part A 工具是两树共享 `tools\image-asset-audit\image_asset_audit.py`（已建：`--profile phase7/phase8.5/direct-image`、`--expected-ratio/width/height`、`--grid ROWSxCOLS`；产 file/尺寸/比例/格式/板式证据 + `overall_part_a_status`，输出仍需 Part B 视觉判定）。** OCR/人脸/水印/感知哈希为软信号扩展、可能暂缺（第二批）。
+- 闸10 的 Part A 工具是两树共享 `tools\video-frame-audit\frame_audit.py`；**闸2b/9 的图片 Part A 工具是两树共享 `tools\image-asset-audit\image_asset_audit.py`（已建：`--profile phase7/phase8.5/direct-image`、`--expected-ratio/width/height`、`--grid ROWSxCOLS`；产 file/尺寸/比例/格式/板式证据 + `overall_part_a_status`，输出仍需 Part B 视觉判定；v0.2 已接第二批软信号——感知哈希(region/panel dhash + --ref-image)、OCR(--expect-text/--watermark-keyword，依赖 pytesseract+Tesseract、缺则降级)、水印(OCR 派生)已落地，人脸仍 deferred；软信号永不改 `part_a_status`，详 §2「第二批工具契约」）。**

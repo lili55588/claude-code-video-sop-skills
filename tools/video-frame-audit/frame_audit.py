@@ -38,6 +38,9 @@ SHOT_RE = re.compile(
 RATIO_RE = re.compile(r"(?:画幅比例|画幅|比例)\s*[：:]\s*([0-9]+\s*:\s*[0-9]+)")
 DURATION_RE = re.compile(r"(?:时长|duration)[^0-9]{0,8}(\d+)\s*s?", re.IGNORECASE)
 REF_RE = re.compile(r"@(?:图片|视频|音频|image|video|audio|img)\d+", re.IGNORECASE)
+BOUNDARY_REVIEW_CLEAR = "CLEAR"
+BOUNDARY_REVIEW_REQUIRED = "BOUNDARY_REVIEW_REQUIRED"
+BOUNDARY_REVIEW_SCORE_RATIO = 2.0
 ORIENTATION_TERMS = (
     "面向",
     "望向",
@@ -507,12 +510,23 @@ def run_scene_scores(ffmpeg: str, video: Path) -> tuple[list[dict[str, Any]], di
     return records, {"returncode": code, "output_tail": output[-2000:]}
 
 
+def compact_scene_score(item: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not item:
+        return None
+    compact: dict[str, Any] = {}
+    for key in ("frame", "time", "mafd", "score"):
+        value = item.get(key)
+        compact[key] = round(value, 6) if isinstance(value, float) else value
+    return compact
+
+
 def scene_summary(
     scores: list[dict[str, Any]], shots: list[Shot], threshold: float, boundary_tolerance: float
 ) -> dict[str, Any]:
     top_spikes = sorted(scores, key=lambda item: item.get("score", 0.0), reverse=True)[:20]
     threshold_spikes = [item for item in scores if item.get("score", 0.0) >= threshold]
     boundaries: list[dict[str, Any]] = []
+    boundary_review_items: list[dict[str, Any]] = []
     for left, right in zip(shots, shots[1:]):
         boundary = left.end
         nearest = min(scores, key=lambda item: abs(item.get("time", 0.0) - boundary), default=None)
@@ -530,6 +544,40 @@ def scene_summary(
         elif nearest:
             selected = nearest
             selected_method = "nearest_fallback_no_significant_peak"
+        outside_significant = [
+            item
+            for item in threshold_spikes
+            if left.start <= item.get("time", 0.0) <= right.end
+            and abs(item.get("time", 0.0) - boundary) > boundary_tolerance
+        ]
+        strongest_outside = max(outside_significant, key=lambda item: item.get("score", 0.0), default=None)
+        selected_score = selected.get("score", 0.0) if selected else 0.0
+        strongest_outside_score = strongest_outside.get("score", 0.0) if strongest_outside else 0.0
+        review_reasons: list[str] = []
+        if strongest_outside and selected_method == "nearest_fallback_no_significant_peak":
+            review_reasons.append("nearest_fallback_used_while_significant_spike_exists_outside_boundary_window")
+        elif strongest_outside and selected:
+            required_score = max(threshold, selected_score * BOUNDARY_REVIEW_SCORE_RATIO)
+            if strongest_outside_score >= required_score:
+                review_reasons.append("stronger_significant_spike_outside_boundary_window")
+        boundary_review_status = BOUNDARY_REVIEW_REQUIRED if review_reasons else BOUNDARY_REVIEW_CLEAR
+        if review_reasons:
+            boundary_review_items.append(
+                {
+                    "from_shot": left.num,
+                    "to_shot": right.num,
+                    "declared_time": boundary,
+                    "selected_method": selected_method,
+                    "selected_diff": compact_scene_score(selected),
+                    "strongest_outside_significant_spike": compact_scene_score(strongest_outside),
+                    "outside_significant_candidate_count": len(outside_significant),
+                    "reasons": review_reasons,
+                    "note": (
+                        "Routing signal only: verify actual cut timing from frames before final visual verdict. "
+                        "This does not change effective_status or visual_verdict_floor."
+                    ),
+                }
+            )
         boundaries.append(
             {
                 "from_shot": left.num,
@@ -547,6 +595,10 @@ def scene_summary(
                 "threshold": threshold,
                 "delta": round(abs(selected.get("time", 0.0) - boundary), 3) if selected else None,
                 "within_tolerance": bool(selected and abs(selected.get("time", 0.0) - boundary) <= boundary_tolerance),
+                "boundary_review_status": boundary_review_status,
+                "boundary_review_reasons": review_reasons,
+                "outside_significant_candidate_count": len(outside_significant),
+                "strongest_outside_significant_spike": compact_scene_score(strongest_outside),
             }
         )
     shot_motion: list[dict[str, Any]] = []
@@ -573,6 +625,14 @@ def scene_summary(
         "top_spikes": top_spikes,
         "boundaries": boundaries,
         "shot_motion": shot_motion,
+        "boundary_review_signal": {
+            "status": BOUNDARY_REVIEW_REQUIRED if boundary_review_items else BOUNDARY_REVIEW_CLEAR,
+            "items": boundary_review_items,
+            "note": (
+                "Boundary review is a Part A routing signal. It asks Part B to inspect cut timing; "
+                "it is not a deterministic fail by itself."
+            ),
+        },
     }
 
 
@@ -733,6 +793,8 @@ def write_report_template(path: Path, project_name: str, task: ClipTask, video: 
     deterministic = manifest.get("deterministic_checks", {})
     deterministic_policy = manifest.get("deterministic_review_policy", {})
     scene = manifest.get("scene_diff", {})
+    boundary_review_signal = scene.get("boundary_review_signal", {})
+    boundary_review_items = boundary_review_signal.get("items") or []
     blocker_summary = deterministic_blocker_summary(deterministic_policy)
     shot_sections: list[str] = []
     for shot in task.shots:
@@ -773,10 +835,12 @@ def write_report_template(path: Path, project_name: str, task: ClipTask, video: 
 **确定性闸最低判定**：{deterministic_policy.get("visual_verdict_floor") or "NONE"}；{deterministic_policy.get("status")}
 **确定性硬风险**：{blocker_summary}
 **差分疑点**：阈值命中 {len(scene.get("threshold_spikes", []))}；阈值 {scene.get("threshold")} raw scdet score points；Top spikes 见 `frame_audit_manifest.json`
+**切点复核信号**：{boundary_review_signal.get("status", BOUNDARY_REVIEW_CLEAR)}；{len(boundary_review_items)} item(s)；仅提示 Part B 复核真实切点，不单独改最终状态
 **前置完整性**：全帧 {manifest.get("preflight", {}).get("full_frames")}；contact sheet {manifest.get("preflight", {}).get("contact_sheets")}；差分 {manifest.get("preflight", {}).get("scene_diff")}；分镜映射 {manifest.get("preflight", {}).get("shot_mapping")} → {manifest.get("effective_status")}
 **复审方式**：主判 / 独立盲审 / 分歧裁决
 
 > 若“确定性闸最低判定”为 FAIL_BLOCKED，视觉层不得因为工具状态是 AUDIT_READY 而放行；除非用户明确接受测试风险，否则最终结论必须按 FAIL_BLOCKED 处理。
+> 若“切点复核信号”为 BOUNDARY_REVIEW_REQUIRED，必须查看对应 flag/cut-pair/相邻全帧，确认真实切点是否偏离声明分镜；该信号本身不是 FAIL。
 
 {"\n".join(shot_sections)}
 
