@@ -101,7 +101,8 @@
 6. ✅ **每个分镜都显式嵌入了场景图引用 `@图片N`**（或 `<subject>场景名</subject>`；纯文字场景名不算），含中间的近景/特写分镜，无遗漏（用 `--scene-image N` 机检，跨场景 Clip 可重复传多个编号）；
 7. ✅ **每个分镜都按素材清单 `场景人口` 字段声明了画面人数**：公共/营业场景（教室/餐厅/街道/站台/宴会等）每个同场分镜都写了背景群像、跨 Clip 不消失；`空镜无人`场景写明无人；不靠空场景图默认成空画面（防"上课教室生成空教室"）；
 8. ✅ 每个分镜的镜头描述符合统一五段格式；
-9. ✅ 末尾补充了正确的全局要求和语言规则。
+9. ✅ 末尾补充了正确的全局要求和语言规则；
+10. ✅ 顶部已填「参考权威声明」5 维（IDENTITY/STRUCTURE/STAGING/LOOK/ACTING）各有唯一权威，无多 reference 抢同一维度（详见 `references/x-tech-oak-koda-workflow.md` §4）。
 
 ---
 
@@ -128,6 +129,16 @@
 - @图片2 = 提花织布机主体图
 - 主体：<subject>苏晚</subject>（在即梦选中已确认的苏晚主体）
 
+## 参考权威声明（Reference Authority Contract·项目顶部全局一次 + Clip 级覆盖）
+每个维度只能有一个权威，防身份图 / storyboard / triptych / 风格图抢同一维度（防"reference 抢权"，详见 `references/x-tech-oak-koda-workflow.md` §4）。简单单角色项目一行带过即可：
+- **IDENTITY**（脸/体型/服装/比例）：`<subject>苏晚</subject>` 或角色 `@图片N`
+- **STRUCTURE**（clip 结构）：Clip 表 / 8-A 严控（若用 X-Tech 路线则标 Route A-F）
+- **STAGING**（动作/blocking/screen direction）：Clip 表
+- **LOOK**（风格/灯光/色彩）：Phase7 风格图 + 步骤二五维反推全片视觉规则
+- **ACTING**（表演）：performance-engine + 三本表演手册
+> 不取代「参考主体 vs 普通参考图」硬规则（`rules-and-fallback.md`），是其超集说明；与权威锚定链 P4→P7→P8.5→P8→P9 并存。多 reference 同控一维 = 抢权，必须在此显式分清。
+> **混合路线项目**：顶部写全局 Contract；某 Clip 若换 Route、或换 triptych/storyboard/look/acting 权威，就在该 Clip 下写 `Contract override：` 只覆盖变化的那几维——既不用每条简单 Clip 重复，又防混合项目抢权。
+
 ## Clip 1（0-9s，对应 Shot 1.1、1.2、1.3）
 （此处放完整 8-A 格式 Prompt，整段可直接复制到即梦）
 
@@ -148,6 +159,7 @@ python C:\Users\Administrator\.claude\skills\video-sop\scripts\validate_phase8_p
 ```
 脚本机检：表头冒号、整数时段、**首段0s+相邻段首尾相接**、任务总时长4~10s、分镜数=声明、编号连续、**逐任务@图片N从1连续**、每分镜含「镜头：」、台词后紧跟「音色：」、末尾全局要求段+语言规则、禁用词/合规名。FAIL 按报错自修再重跑。WARN（代称/疑似名人名）人工复核。详见 `validation-contracts.md`。
 > 它兜底自检闸 3/4/5/7 里能正则确定的部分；闸 1/2/6 与需语义判断的仍靠 LLM 自检。中文输出在 Windows 控制台可能乱码，看 `[PASS]/[FAIL]/RESULT` 标签与退出码即可（需可读中文可先 `$env:PYTHONUTF8=1`）。
+> 🔴 **含 `X-TECH INFER-BETWEEN CLIP`（X-Tech 质感 Clip）时别机械照跑**：严控 8-A Clip 照常机检；**infer-between Clip 不走普通 8-A 校验器**（它不认该格式、会 FAIL/报错）——改走 FACT-LOCK 人工闸（self-check 闸 7b）+ Gate10 把关，**不能用普通 8-A `RESULT: PASS` 当该 Clip 的交付门**（validator 扩展前，详见 `references/x-tech-oak-koda-workflow.md` §5.7/§9）。
 
 ### 可选增强（非强制，提升生成稳定性；经即梦实测建议）
 8-A 必备的只有「冒号模板 + 整数时段 + 镜头五段 + 场景嵌入 + 音色 + 全局要求段 + 语言规则」。以下为**可选**，多镜易跳变/要更稳时加：

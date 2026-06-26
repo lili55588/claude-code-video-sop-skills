@@ -1,7 +1,7 @@
 # 9 道模型无关自检闸 + 闸10 成片视觉验收（回报「已完成」前自己跑）
 
 > 这是即梦工作流硬规则的「验收闸」，由**你自己心算/对照执行**。每到一个阶段产物落盘、准备回报「已完成」前，跑对应的闸，把 PASS/FAIL 结果简述给用户；有 FAIL 先自修再交付。
-> 对应关系：闸 1 贯穿全程；闸 2 在 P4/P7；**闸 2b（素材图质检）在 P7 回贴后**；**闸 2c（风格卡一致）在 P4/P7、仅 Phase1 产出过风格卡时**；闸 3/4 在 P5/P8；闸 5 在 P8；闸 6 在 P5.4/P8；闸 7 在 P8；**闸 8（场景人口）在 P4/P5/P8**；**闸 9（片段视觉锚点包）在 P8.5、仅启用关键帧宫格锚点时**；**闸 10（成片逐帧视觉验收）在 P9、每个生成 Clip 进剪辑前，首个模型相关/视觉闸**。
+> 对应关系：闸 1 贯穿全程；闸 2 在 P4/P7；**闸 2b（素材图质检）在 P7 回贴后**；**闸 2c（风格卡一致）在 P4/P7、仅 Phase1 产出过风格卡时**；闸 3/4 在 P5/P8；闸 5 在 P8；闸 6 在 P5.4/P8；闸 7 在 P8；**闸 7b（X-Tech 条件闸）在 P8、仅启用 X-Tech 路线时**；**闸 8（场景人口）在 P4/P5/P8**；**闸 9（片段视觉锚点包）在 P8.5、仅启用关键帧宫格锚点时**；**闸 10（成片逐帧视觉验收）在 P9、每个生成 Clip 进剪辑前，首个模型相关/视觉闸**。
 > **Phase8 双层兜底**：闸 3/4/5/7 里**能正则确定**的部分（结构/时段连贯/逐任务引用/镜头·音色/全局要求段）已由确定性脚本 `scripts/validate_phase8_prompt.py` 机检——P8 落盘后**必跑该脚本且 `RESULT: PASS`**，再由你补判闸 1/2/6 与需语义判断的部分（用法见 `validation-contracts.md`）。
 
 ---
@@ -64,6 +64,18 @@
 ⑧ **微表情与视线五查**（防僵硬/防眼神飘，见 `micro-expression.md`）：无裸奔大情绪词（嚎啕大哭/放声大笑/极度震惊——须已拆成 Start→Transition→End 过程或微量表达；**营销"夸张反应"镜头豁免强度、但仍须有过程**）；无会被字面执行的比喻（眼睛发光/亮了、脸色阴沉、目光如刀——须已物理置换，真实光源反射除外）；无"全程直视镜头"的静态描述（直视须有抬眼过程）；**每个可见正常视力的焦点角色有明确视线目标或可见"不看"理由**（对话戏说话者/听者视线匹配场面几何，过肩镜头写清视线越过谁落在谁脸上）；**失焦仅限剧情明示状态**（失明/恍惚/重击/醉酒/解离）且有重新聚焦时刻。
 ⑨ **台词镜头表演引擎（P1/P2，详见 `performance-engine.md` §8）**：发动机字段可追溯已确认剧本（无一从角色图推断）；P0/P1/P2 与剧本 beat 匹配、P2 必带剧本依据+转折触发、全台词 P2 触发复核；三力配方只产「本句声音过程」叠基础音色（基础音色仍唯一跨 Clip 源）；P0 不强塞技巧、P2 每句 ≤1 特殊声音事件、口吃/破音非必填；正文不残留 objective/obstacle/tactic/subtext 等内部标签（机检 `--forbid-performance-internal-labels` + 语义复核）；表演段时长并入计时；微动作符景别、视线符空间；不改台词原文、不新增剧本不支持的转折。**本验收挂闸6/7、不依赖 Phase8.5**；启用 Phase8.5 时闸9 仅追加「锚点帧 vs 表演起止状态」兼容检查。
 **FAIL 例**：`分镜2 只引用了苏晚@图片2、漏嵌场景@图片1（场景漂移）`、`Clip2 缺末尾全局要求段`、`台词缺音色描述`、`台词后音色仅写"她悲伤地说"，缺声音过程（音量/语速/停顿/尾音）`、`Clip3 苏晚基础音色与 Clip1 不一致（年龄24→22）`、`出现"诺兰风格"需替换为中性描述`、`分镜3 写"她眼睛亮了起来"（会字面生成发光），须置换为"视线骤然聚焦，眼睛微微睁大"`。
+
+## 闸 7b · x_tech_oak_koda（X-Tech 条件闸，仅当 `x-tech-oak-koda-workflow.md` 已加载/项目用 X-Tech·OAK·Koda·triptych·infer-between·Extend 路线时跑）
+**职责**：X-Tech 路线的 Clip 按其专属规则过闸——不被 8-A-only 结构断言误伤，也不放过 infer-between 的事实漂移。非 X-Tech 项目整闸跳过。
+**检查项**：
+- **单 prompt 不混松严**：每条 Clip 只一个 Route（标准 8-A 或 A/B/C/D/E/F）；无单 prompt 同时写「三联画 infer-between 脑补」与「逐拍 8-A/storyboard 严执行」。
+- **Reference Authority Contract**：项目顶部有全局 Contract；换 Route 或换权威的 Clip 写了 `Contract override`；IDENTITY/STRUCTURE/STAGING/LOOK/ACTING 各且仅一个权威，无抢权（身份板与 triptych 不同时声明控 look）。
+- **infer-between Clip**：已显式标 `TEXTURE-DRIVEN`（事实驱动/带货/因果动作 Clip 留严控 8-A 或 Route D/E）；用 `X-TECH INFER-BETWEEN CLIP` 专用块、非伪 8-A 多分镜；**FACT-LOCK 七项齐**（身份/服装/标志、Clip 级场景 `@图片N`、道具白名单、population、不可发明、1~3 关键 beat、放权范围），不齐则 infer-between 阻断、回退 Phase5 或 8-A；**它豁免逐分镜 `@图片N` 机检，但 FACT-LOCK 必含场景 ref + population**；**不依赖普通 8-A `RESULT: PASS`**，走人工 FACT-LOCK 闸 + Gate10（validator 扩展前，见 `x-tech-oak-koda-workflow.md` §5.7）。
+- **Route F Extend**：串行依赖（先有 video1）、不与独立 Clip 批量并行；连续 take 连贯（地点可在 take 内变化）、非跨场景表演迁移。
+- **FACS/IPA/Laban 不进正文**：内部编码层不出现在最终 Phase8 正文（现 validator 未机检这些词，靠本闸语义守）。
+- **10s 默认**：X-Tech 的 15s 仅用户显式风险模式，未把 15s 当默认。
+**阻断规则**：infer-between Clip 缺完整 FACT-LOCK、或单 prompt 混松严、或多 reference 抢同一维度 → **不放行该 Clip**。
+**FAIL 例**：`某 Clip 标 infer-between 但 FACT-LOCK 没写场景 @图片N → 阻断`、`一条 prompt 里既写三联画脑补又逐格 storyboard 执行`、`身份板与 triptych 都声明控 look，未在 Contract 分清`、`infer-between Clip 拿普通 8-A 校验器 RESULT: PASS 当交付门`。
 
 ## 闸 8 · scene_population（场景人口，P4/P5/P8）
 **职责**：防"参考图空镜 → 成片照空场景生成无人画面"（教室没学生/餐厅没食客/街道没行人/宴会没宾客——最高频穿帮）。场景参考图永远空镜（只锁空间），但成片人数必须独立声明并逐层贯通。
