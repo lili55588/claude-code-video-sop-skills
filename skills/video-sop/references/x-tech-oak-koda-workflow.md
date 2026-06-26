@@ -1,7 +1,7 @@
-# X-Tech 高级控制模块：OAK × Koda（外接·默认关闭）
+# X-Tech 高级控制模块：OAK × Koda（外接·默认不执行·自动评估）
 
 > **定位**：video-sop 的**外接高级导演控制技法包**，源自 X 平台 OAK(@_OAK200) 与 Koda(@aimikoda) 的 Seedance 提示词技法。它**不替代**主流程——video-sop 管项目流程/10s 上限/验证/交付；本模块管**高级表演发现、构图探索、storyboard/triptych 控制、infer-between 质感生成**。两者通过 **Clip 级 Route + Reference Authority Contract** 对接。
-> **默认关闭**：只有命中触发词才加载本文件；不命中时本模块零感知、行为不变。**唯一例外**：Reference Authority Contract 已并入 Phase8 core（`phase8-video-prompt.md` §六）属常开增量，非 X-Tech 项目也会用到——但它轻量（简单项目一行带过）。
+> **默认不执行、但自动评估**：本模块不默认改写主流程；但 **Phase5/Phase8 有常开轻量候选探针**自动评估每个 Clip 适不适合 X-Tech（**哪怕只给一句灵感**，不需用户记术语）。**命中候选、或用户点名触发词**时才加载本文件、提议具体 Route，**用户确认才执行、绝不静默改路线**；全是普通事实驱动项目则默认纯 video-sop。**唯一常开增量**：Reference Authority Contract（已进 Phase8 core，轻量）。
 > **真相源**：本文件是 X-Tech 模块的单一真相源；SKILL.md 只放 router 入口。原始 prompt 全文不搬进来，外部 source pack 见 §10。
 
 触发词：`X技巧 / OAK / Koda / aimikoda / triptych / 三联画 / audition / 试镜 / Character Identity Board / Director Strip / storyboard blueprint / FACS / IPA / Laban / Seedance 原生 15s / infer-between / 脑补生成`。
@@ -14,6 +14,17 @@
 2. **Clip 级分支，永不在单 prompt 内混写**：不要在同一条 video prompt 里既要求模型"自由推断三图之间的电影时间"（松/OAK），又要求"逐格照 storyboard 执行"（严/Koda）。分支粒度是 **clip**：一部片里事实驱动 Clip 走严控、质感 Clip 走 infer-between，各是独立一次生成，单 prompt 内永不混写。
 3. **单一权威**：同一维度只能有一个权威（身份/结构/调度/look/表演）。多 reference 抢同一维度 = 抢权，必须用 §4 Reference Authority Contract 显式声明。
 4. **10s 默认 / 15s 风险模式**：默认仍按 video-sop 全局铁律——单 Clip 4~10s（用户实测覆写，**不改回 15s**）。OAK/Koda 的 15s 仅作"原生 Seedance 上限 / 用户**显式要求**的风险模式"，校验器单独传 `--max-duration 15`，**默认值不动**。Koda 12 格/15s 默认要转成 8~10s 或拆分。
+
+## 1.5 · 启用协议（两段闸·自动评估、不默认执行）
+
+用户**不需要记术语、也不需要判断"该不该用 X-Tech"**——系统自动评估、提议，用户确认才执行：
+
+1. **第一段·常开轻量探针**（钉在 `phase5-storyboard.md` 5.3 + `phase8-video-prompt.md` §一 核心，**不靠触发词**）：每个 Clip 标 6 类之一（与 Codex 根同串、便于 HANDOFF）——`FACT-DRIVEN`(默认严控 8-A、**不提**) / `TEXTURE-DRIVEN`(→Route B infer-between 候选) / `ONE-TAKE`(→Route C) / `STRICT-ACTION`(→Route D) / `AUDITION-CANDIDATE`(试镜/表演校准) / `NO-XTECH`(默认)；用户报"即梦太僵硬/动作不自然"也算候选信号。探针极轻、不加载全模块。门槛高，拿不准标 `NO-XTECH`。
+2. **第二段·命中才加载 + 提议**：探针发现候选，才加载本文件，把所有候选 Clip **一次性**列给用户、各带一句理由 + 建议 Route（如"Clip3 质感驱动，建议 Route B infer-between：锁事实放权动作；要不要启用？"）。
+3. **用户确认才执行**：点头才走该 Route；**绝不静默改路线**。拿不准 / 全是事实驱动就不提、默认严控。
+4. 用户也可**直接点名触发词**主动启用（见模块顶部触发词）——那是第二条入口，不是唯一入口。
+
+> 即：**不是"用户不说就不用"，而是"系统自动判断、但不会无说明地乱套"**。默认仍是纯 video-sop，X-Tech 只在命中条件的 Clip 上、经确认后启用。
 
 ---
 

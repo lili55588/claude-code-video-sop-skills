@@ -13,6 +13,9 @@
 2. 当前 Clip 需要用到的素材都已生成成功、资源可用——**禁止因某素材生成失败就用纯文字描述特征替代参考图，也禁止故意不引用该素材继续生成**；
 3. 全局比例已确认、全局风格已确认、Clip 表已过连贯性校验、单 Clip 时长在 4~10s（用户实测覆写，官方 15s 已收紧）。
 
+> **X-Tech 候选探针（Phase8 关·常开·与 Phase5.3 同协议，详见 `references/x-tech-oak-koda-workflow.md` §1.5）**：写 prompt 前再过一遍——Clip 表里有没有 `TEXTURE-DRIVEN/ONE-TAKE/STRICT-ACTION/AUDITION-CANDIDATE` 候选 Phase5.3 漏标；**用户回贴成片后报"即梦太僵硬/动作不自然"时也在此触发**。命中才加载 `x-tech-oak-koda-workflow.md`、把候选一次性带理由提议 Route、**确认才执行、绝不静默改路线**；全 `FACT-DRIVEN` 就默认严控 8-A、不提。
+> **路线裁定前置**：若 Phase5.3 已标出 X-Tech 候选，写 Prompt 前必须完成裁定；只对用户已确认的候选加载完整 X-Tech 模块并记录 Route A-F，被拒绝或未确认的候选一律按标准严格 8-A 写；infer-between Clip 必须有完整 FACT-LOCK 才能进入专用格式。
+
 ---
 
 ## 二、执行策略（时长优先原则，最高优先级）

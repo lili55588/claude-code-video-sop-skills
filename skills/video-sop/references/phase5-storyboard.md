@@ -158,9 +158,10 @@ Shot 2 | …
 - **装满优先**：尽量让每个 Clip 接近 10 秒上限，提高生成效率；**累加时长达到 8~10s 即封箱**（优先选在剧情自然停顿处：动作完成/对话结束/场景切换/情绪落点）；
 - **情绪连贯**：情绪高潮镜头可独立成 Clip，避免被切割；情绪转折处可适当拆 Clip 营造节奏。
 
-> **连贯 take 优先 + 事实/质感判定（X-Tech 模块·仅启用时适用，详见 `references/x-tech-oak-koda-workflow.md` §3/§5）**：
+> **连贯 take 优先 + X-Tech 候选探针（常开·轻量·自动评估，无需触发词；详见 `references/x-tech-oak-koda-workflow.md` §3/§5）**：组合完 Clip 后例行扫一遍——
 > - **连贯 take 优先**：能一镜连贯的动作 / 一镜到底**别为凑箱切碎**（切碎打断动量、每条 Clip 从参考图重置身份与物理、接缝增漂移）；只有控制模式切换、10s 上限、或刻意情绪断点才切。短动作(6~8s)按自然时长走、不硬凑满 10s。
-> - **事实驱动 vs 质感驱动**：给 Clip 标控制模式——剧情/带货/有因果链(拧螺丝→机器塌)/必须命中具体动作事实 = **事实驱动**，走默认严控 8-A；纯氛围/舞蹈/情绪流/一镜到底且无因果链 = **质感驱动**，可标 `infer-between`(Route B·锁事实放权动作)，**必带 FACT-LOCK(身份+场景@图片N+population+关键beat+不可发明)、没写清不准启用**，松生成后挂 Gate10 严审片。
+> - **X-Tech 候选探针（6 类标签·与 Codex 根同串，便于跨引擎 HANDOFF）**：给每个 Clip 标一类——`FACT-DRIVEN`（剧情/带货/因果链(拧螺丝→机器塌)/对白时序/连续性=事实，走默认严控 8-A、**不提 X-Tech**）／`TEXTURE-DRIVEN`（氛围/情绪流/舞蹈/动量为主、事实少 → Route B infer-between 候选，须能写全 FACT-LOCK）／`ONE-TAKE`（连续运镜/动作 → Route C 候选）／`STRICT-ACTION`（武打/跑酷/多 beat → Route D 候选）／`AUDITION-CANDIDATE`（需试镜/表演校准，不覆盖剧本事实）／`NO-XTECH`（默认）。用户报"即梦太僵硬/动作不自然"也算候选信号。**门槛要高，拿不准就标 `NO-XTECH`、走严控 8-A。**
+> - **命中才加载 + 提议 + 确认**：发现候选才加载 `references/x-tech-oak-koda-workflow.md`，把所有候选 Clip **一次性**列给用户、各带一句理由 + 建议 Route（如"Clip3 是质感驱动，建议 Route B infer-between：锁事实放权动作"）；**用户点头才执行**——质感 Clip 走 infer-between 必带 FACT-LOCK(身份+场景@图片N+population+关键beat+不可发明)、没写清不准启用、松生成后挂 Gate10。**拿不准 / 全是事实驱动就不提、默认严控；绝不静默改路线。**
 
 ### 合并策略
 1. 从第一个镜头开始累加时长；达到 8~10s 封箱为一个 Clip；

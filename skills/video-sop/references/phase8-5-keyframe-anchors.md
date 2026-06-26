@@ -38,7 +38,7 @@
 - 一个子镜头可出 0 / 1 / 2 张，**最多 2 张**；需要 2 张时用「动作中段 + 结束状态」，**不能变成两个不相干的机位**。
 - 「何时给一镜 2 张」沿用分镜判据：**景别与运镜都不变→1 张；景别或运镜变了但动作不激烈→2 张；动作激烈→本就该在 Phase5 独立成镜**。
 
-## 二.5、X-Tech 高级锚点模式（可选·仅启用 X-Tech 模块时，详见 `references/x-tech-oak-koda-workflow.md` §2）
+## 二.5、X-Tech 高级锚点模式（可选·仅在用户点名或 Phase5/8 探针候选经确认后启用 X-Tech 模块时，详见 `references/x-tech-oak-koda-workflow.md` §2）
 默认 5/6 宫格之外，X-Tech 提供 2 种**替代锚点版式**，都 ≤6 格、**不触本节 6 格上限**；按镜头性质选，选用时下列不变量照旧守：**身份/画质仍归 Phase7 参考图、本机像素拼接禁 AI 重绘、§九 artifact 守卫句必带、§十 闸9 QC 照走**。
 - **Triptych 锚点（3 格竖排）**：上=起势、中=推进、下=payoff，给即梦构图/节奏参考。⚠️ 这里只是**构图锚点**，不是 Phase8 的 infer-between 生成模式（那在 `phase8-video-prompt.md` 走 Route B、整段交即梦脑补，配 FACT-LOCK + Gate10）；当锚点用时下游 Phase8 仍按所选 Route 生成。
 - **4-panel same-lens master 锚点（4 格·一镜到底）**：4 格是同一镜的 sampled phases、非 4 个独立切镜；标 same-lens / developing master，scale change 来自物理运镜。适合连续追逐/运动。

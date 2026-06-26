@@ -68,6 +68,9 @@
 ## 闸 7b · x_tech_oak_koda（X-Tech 条件闸，仅当 `x-tech-oak-koda-workflow.md` 已加载/项目用 X-Tech·OAK·Koda·triptych·infer-between·Extend 路线时跑）
 **职责**：X-Tech 路线的 Clip 按其专属规则过闸——不被 8-A-only 结构断言误伤，也不放过 infer-between 的事实漂移。非 X-Tech 项目整闸跳过。
 **检查项**：
+- **候选探针只提议**：Phase5/Phase8 常开轻量探针可以在没有触发词时标出 X-Tech 候选，但它只做路线建议，不能自动执行 X-Tech 路线。
+- **批量提议 + 用户确认**：明确候选必须一次性列出候选 Clip、建议 Route A-F 和一句理由；记录用户确认后，才允许加载/套用完整 X-Tech 路线。
+- **未确认回严控**：被拒绝或未确认的候选 Clip 仍按标准严格 8-A 生成；没有高置信候选时不提 X-Tech。
 - **单 prompt 不混松严**：每条 Clip 只一个 Route（标准 8-A 或 A/B/C/D/E/F）；无单 prompt 同时写「三联画 infer-between 脑补」与「逐拍 8-A/storyboard 严执行」。
 - **Reference Authority Contract**：项目顶部有全局 Contract；换 Route 或换权威的 Clip 写了 `Contract override`；IDENTITY/STRUCTURE/STAGING/LOOK/ACTING 各且仅一个权威，无抢权（身份板与 triptych 不同时声明控 look）。
 - **infer-between Clip**：已显式标 `TEXTURE-DRIVEN`（事实驱动/带货/因果动作 Clip 留严控 8-A 或 Route D/E）；用 `X-TECH INFER-BETWEEN CLIP` 专用块、非伪 8-A 多分镜；**FACT-LOCK 七项齐**（身份/服装/标志、Clip 级场景 `@图片N`、道具白名单、population、不可发明、1~3 关键 beat、放权范围），不齐则 infer-between 阻断、回退 Phase5 或 8-A；**它豁免逐分镜 `@图片N` 机检，但 FACT-LOCK 必含场景 ref + population**；**不依赖普通 8-A `RESULT: PASS`**，走人工 FACT-LOCK 闸 + Gate10（validator 扩展前，见 `x-tech-oak-koda-workflow.md` §5.7）。
