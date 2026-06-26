@@ -84,6 +84,12 @@
 - **改写边界（铁律）**：Clip 表**已蕴含**该情绪 → 可物理化翻译（属无损翻译）；需要新增 Clip 表**不支持**的视线目标/动作 → **回退 Phase5 补进 Clip 表**，禁止在 Phase8 静默加戏。
 - 三段式情绪天然映射分镜时间段（`0-3s` 维持→`3-6s` 物理 Transition→`6-9s` 浮现新表情），强度段间递进、不段内拉满。
 
+**8. 台词镜头·表演翻译闸（导演术语执行化，详见 `references/performance-engine.md`）**：对 P1/P2 台词镜头（Phase5.1 表演发动机已定动机），写正文前按 `剧本事实→目标/障碍/策略/潜台词→三力声音配方(内部)→可听声音过程→可见表情/视线/身体→台词后反应与余波` 翻译，分派三本手册（比喻/表情/视线→`micro-expression`、声音→`voice-control`、身体→`action-naturalness`）。
+- **三力声音配方**（如 cold/afraid/calculated）是**内部中间表示**，**只生成「本句声音过程」、叠加在基础音色上**（基础音色仍一字不差，见上 4.），禁一对一映射（grief≠机械颤音）；
+- **P2 每句最多一个**特殊声音事件（破音/迟疑/停顿…），P0 不强塞，口吃/破音非每句必填；
+- 🔴 **正文禁残留内部标签**（objective/obstacle/tactic/subtext/潜台词/三力配方/Voice Trigger）——正文只出现**可见动作+可听声音**；机检 `validate_phase8_prompt.py --forbid-performance-internal-labels`；
+- 表演段时长（开口前+说话+余波）并入计时。**详细规则一律见 `performance-engine.md`（单一真相源），不在此复制。**
+
 ---
 
 ## 四、生成前必查校验清单（一条不合格必须重写，对应自检闸 7）
@@ -133,7 +139,7 @@
 ### 🔒 落盘后必跑确定性校验器（Phase8 兜底闸）
 `{项目名}_视频生成Prompt集.md` 写好后，**先跑脚本、`RESULT: PASS` 才把 Prompt 集交给用户**：
 ```powershell
-python C:\Users\Administrator\.claude\skills\video-sop\scripts\validate_phase8_prompt.py "C:\Users\Administrator\Desktop\claude长视频创作\{项目名}\{项目名}_视频生成Prompt集.md" --expected-tasks 1 --expected-shots 3 --ref-images 3 --scene-image 1
+python C:\Users\Administrator\.claude\skills\video-sop\scripts\validate_phase8_prompt.py "F:\claude长视频创作\{项目名}\{项目名}_视频生成Prompt集.md" --expected-tasks 1 --expected-shots 3 --ref-images 3 --scene-image 1
 # --scene-image 1 = 声明 @图片1 是场景图，逐分镜机检场景嵌入（防场景漂移，必带）
 # 跨场景 Clip：把所有场景图编号都声明出来 --scene-image 1 --scene-image 2（任一命中即过）
 # 多任务(>10s拆Clip)：--expected-tasks 改成任务数、--expected-shots 改成分镜总数；引用数量断言仅单任务生效

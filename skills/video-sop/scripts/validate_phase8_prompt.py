@@ -102,6 +102,16 @@ SCENE_CROWD_RE = re.compile(
     r"空着|半空|大半.{0,3}空|只剩|翻上桌|空出|空了|驶离|散去|散场|放学后|打烊|歇业|清晨无人|寂静无人"
 )
 
+# 表演引擎（performance-engine §3/§8）：Phase8 正文禁残留发动机内部标签（--forbid-performance-internal-labels 用）。
+# 只抓明确「字段名+冒号」标签/模板残留；不封普通词——"视线目标"不被抓（只抓"表演目标："），免误伤合法措辞。
+PERFORMANCE_INTERNAL_LABEL_RE = re.compile(
+    r"\b(?:objective|obstacle|tactic|subtext)\s*[:：]"
+    r"|voice\s*trigger\s*[abc]?\s*[:：]"
+    r"|(?:表演目标|表演等级|剧本依据|潜台词|转折触发|三力配方)\s*[:：]",
+    # 只抓发动机专有标签；不抓普通词（目标/障碍/策略/结束状态/权力关系——都是合法镜头/剧情正文词），免误伤
+    re.I,
+)
+
 
 class Report:
     def __init__(self) -> None:
@@ -343,6 +353,9 @@ def _check_globals(r: Report, text: str, args: argparse.Namespace) -> None:
     if args.require_storyboard_artifact_guard:
         check_storyboard_artifact_guard(r, text)
 
+    if args.forbid_performance_internal_labels:
+        check_performance_internal_labels(r, text)
+
     for term in args.banned_term:
         if term.lower() in text.lower():
             r.fail(f"命中禁用词：{term}")
@@ -375,6 +388,22 @@ def check_storyboard_artifact_guard(r: Report, text: str) -> None:
             r.fail(f"artifact 排除缺『{label}』（须禁止把宫格的{label}渲进成片）。")
 
 
+def check_performance_internal_labels(r: Report, text: str) -> None:
+    """表演引擎（performance-engine §3/§8）：Phase8 正文不得残留发动机内部标签。
+    只抓明确「字段名+冒号」标签/模板残留（objective/subtext/潜台词/三力配方/Voice Trigger 等）；
+    不封普通词——"视线目标"不被抓（只抓"表演目标："），免误伤合法正文措辞。
+    P2 是否真对应剧本 beat、等级是否匹配等语义项仍由 LLM 跨 Phase 自检，不由本正则伪装覆盖。"""
+    scan_text = QUOTE_RE.sub("「」", text)  # 扫描前剔除「」内台词（对齐 Codex strip_dialogue）：台词里出现标签字不误伤
+    hits = sorted(set(m.group(0).strip() for m in PERFORMANCE_INTERNAL_LABEL_RE.finditer(scan_text)))
+    if hits:
+        r.fail(
+            f"Phase8 正文残留表演引擎内部标签：{', '.join(hits)}"
+            f"（这些只是中间表示，正文只许出现可见动作+可听声音；见 performance-engine.md §3/§8）。"
+        )
+    else:
+        r.ok("Phase8 正文无表演引擎内部标签残留。")
+
+
 def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(description="校验即梦 8-A 视频生成 Prompt 集")
     p.add_argument("prompt_file")
@@ -398,6 +427,8 @@ def main(argv: list[str]) -> int:
     p.add_argument("--negative-required", action="store_true")
     p.add_argument("--require-storyboard-artifact-guard", action="store_true",
                    help="Phase8.5：上传故事板/分镜宫格图时，校验正文有宫格引用+规划限定+artifact排除，缺则 FAIL")
+    p.add_argument("--forbid-performance-internal-labels", action="store_true",
+                   help="表演引擎：Phase8 正文残留 objective/subtext/潜台词/三力配方/Voice Trigger 等内部标签则 FAIL（不误伤『视线目标』等正文措辞）")
     p.add_argument("--subject-required", action="store_true")
     p.add_argument("--banned-term", action="append", default=[])
     args = p.parse_args(argv)

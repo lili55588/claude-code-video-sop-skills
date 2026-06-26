@@ -1,7 +1,7 @@
 # 闸 10 · 成片逐帧视觉验收（generated_video_visual_audit）
 
 > 工作流**第一道模型相关（视觉）闸**：闸 1–9 全是出片前文本闸（含 `validate_phase8_prompt.py` 正则兜底），本闸在视频**真渲染出来之后看像素**，逐帧核对成片是否对得上分镜 Prompt。平台通用（即梦 / 小云雀 Pippit / Seedance / 任意产出）。
-> 跨引擎规格全文见 `C:\Users\Administrator\Desktop\claude长视频创作\闸10_成片逐帧视觉验收_规格草案.md`（v0.3，Claude×Codex 共识）。
+> 跨引擎规格全文见 `F:\claude长视频创作\闸10_成片逐帧视觉验收_规格草案.md`（v0.3，Claude×Codex 共识）。
 > 本闸 = **视觉验收内核 VVK 在 P9 的实例**（共用内核见 `visual-verification-kernel.md`，闸2b/闸9/闸10 同源）。
 
 ## 触发（自动，非用户开口）
@@ -20,11 +20,11 @@
 
 ```powershell
 python C:\Users\Administrator\Desktop\tools\video-frame-audit\frame_audit.py `
-  "C:\Users\Administrator\Desktop\claude长视频创作\{项目名}\{项目名}_视频生成Prompt集.md" `
+  "F:\claude长视频创作\{项目名}\{项目名}_视频生成Prompt集.md" `
   --clip 2 `
-  --video "C:\Users\Administrator\Desktop\claude长视频创作\{项目名}\pippit_outputs\xxx.mp4" `
+  --video "F:\claude长视频创作\{项目名}\pippit_outputs\xxx.mp4" `
   --audit-profile final `
-  --out-dir "C:\Users\Administrator\Desktop\claude长视频创作\{项目名}\逐帧自检\Clip2_{时间戳}"
+  --out-dir "F:\claude长视频创作\{项目名}\逐帧自检\Clip2_{时间戳}"
 ```
 - `--audit-profile`：`final`(默认，比例容差 1%) / `test`(480p 平台档，3%)；成片用 final。`--scene-threshold` 默认 5.0（raw scdet 分，非 0-1）。
 - 多片段（同 Clip 多段 / 带相邻 Clip 末·首片做跨 Clip 切点对）`--video` 可重复，第一个为受审片。
