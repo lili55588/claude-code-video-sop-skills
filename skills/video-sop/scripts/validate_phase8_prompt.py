@@ -16,6 +16,11 @@
 **每个分镜显式嵌入场景图 @图片N（--scene-image 可重复传多值，任一命中即过，支持跨场景 Clip；防场景漂移）**；
 分镜零引用软告警；代称默认 WARN、--fail-pronouns 升级 FAIL（剔除「」内台词后扫描）；合规名软告警。
 
+X-Tech infer-between（2026-06-27 对齐 Codex 分支·三根一致）：识别 `X-TECH INFER-BETWEEN CLIP` 专用块——
+单 prompt 不混松严（C1：标准 8-A 块禁现 infer-between/FACT-LOCK 字样、专用块禁现 8-A 表头/分镜时段）、
+infer-between 块豁免逐分镜 @图片N 改校 FACT-LOCK 七字段（含场景 @图片N + population + no-invention + 1~3 key beats + inference scope）、
+FACS/IPA/Laban/AU 不进块内正文；`--expected-xtech-infer-between N` 断言专用块数量。对纯标准 8-A prompt 零影响（无块无伪装词→零报告行）。
+
 用法：
   python validate_phase8_prompt.py "{项目名}_视频生成Prompt集.md"
         [--expected-tasks N] [--expected-shots N]
@@ -112,6 +117,65 @@ PERFORMANCE_INTERNAL_LABEL_RE = re.compile(
     re.I,
 )
 
+# ── X-Tech infer-between 机检子系统（对齐 Codex 分支·三根一致·2026-06-27）─────────
+# 实现 §9 待办三项：① C1 单 prompt 不混松严；② infer-between 豁免逐分镜@图片N、改校 FACT-LOCK；
+# ③ FACS/IPA/Laban/AU 不进 infer-between 块正文。规则真相源 = x-tech-oak-koda-workflow.md §5.4/§5.5。
+# 字段标签固定英文（机检键，跨根可移植）；消息中文。对纯标准 8-A prompt 是 no-op（无标记→零报告行）。
+XTECH_MARKER_RE = re.compile(r"(?im)^\s*X-TECH\s+INFER-BETWEEN\s+CLIP\s*$")
+CLIP_HEADING_RE = re.compile(r"(?im)^\s*##\s*Clip\s+\d+")
+XTECH_DISGUISE_RE = re.compile(
+    r"\b(?:infer-between|FACT-LOCK|TRIPTYCH\s+ROLE|GENERATION\s+DIRECTION)\b",
+    re.I,
+)
+IMAGE_REF_RE = re.compile(r"@(?:图片|圖片|image|img)\s*\d+", re.I)
+# infer-between FACT-LOCK 的 POPULATION STATE 机检（无人/仅命名角色/背景群像，中英都收）
+XTECH_POPULATION_RE = re.compile(
+    r"无人物|没有人|不出现其他人|不出现任何人|无旁人|空无一人|"
+    r"只有[^，。；]*(?:@图片\d+|<subject>|一人|两人|二人|独自|自己)|"
+    r"只剩[^，。；]*|空镜|空场景|空教室|空房间|空站台|空旷|空着|空座位|"
+    r"背景(?:有|中有|里有|出现|保持|维持)|背景学生|背景同学|"
+    r"学生|同学(?:们)?|路人|行人|乘客|旅客|人流|人群|群众|人来人往|"
+    r"宾客|观众|顾客|工作人员|店员|老师|职员|客人|"
+    r"no people|no characters|no other (?:people|characters)|only |"
+    r"background (?:extras|students|passersby|passengers|guests|staff|crowd|people)|crowd|passersby",
+    re.I,
+)
+NO_INVENTION_RE = re.compile(
+    r"\b(?:no|do\s+not\s+add)\s+new\s+(?:characters?|locations?|props?|plot events?|dialogue)\b|"
+    r"\bno\s+changed\s+identity\b|\bdo\s+not\s+change\s+(?:identity|the\s+identity)\b|"
+    r"不(?:新增|添加|出现)(?:新)?(?:人物|角色|地点|场景|道具|剧情|事件|台词)|"
+    r"不(?:改变|更改|改动)(?:身份|人物身份|角色身份)",
+    re.I,
+)
+INFERENCE_SCOPE_RE = re.compile(
+    r"(?:only\s+infer|infer\s+only|只能?推断|仅(?:推断|脑补|补全)|只(?:推断|脑补|补全)).{0,120}"
+    r"(?:action|transition|camera|emotional|momentum|movement|动作|过渡|转场|镜头|情绪|节奏|动势)",
+    re.I | re.S,
+)
+XTECH_INTERNAL_CODE_RE = re.compile(
+    r"\b(?:FACS|IPA|Laban|AU\s*\d{1,2}[A-Z]?|Action\s+Unit\s+\d{1,2}[A-Z]?)\b",
+    re.I,
+)
+XTECH_FACT_FIELDS = [
+    "IDENTITY / COSTUME / SIGNATURE MARKERS",
+    "SCENE / ENVIRONMENT REFERENCE",
+    "PROP WHITELIST",
+    "POPULATION STATE",
+    "NO INVENTION",
+    "KEY BEATS",
+    "INFERENCE SCOPE",
+]
+XTECH_AUTHORITY_FIELDS = [
+    "IDENTITY AUTHORITY",
+    "STRUCTURE AUTHORITY",
+    "STAGING AUTHORITY",
+    "LOOK AUTHORITY",
+    "ACTING AUTHORITY",
+]
+XTECH_TRIPTYCH_FIELDS = ["Top panel", "Center panel", "Bottom panel"]
+XTECH_SECTION_LABELS = ["FACT-LOCK", "REFERENCE AUTHORITY CONTRACT", "TRIPTYCH ROLE", "GENERATION DIRECTION"]
+XTECH_ALL_LABELS = XTECH_SECTION_LABELS + XTECH_FACT_FIELDS + XTECH_AUTHORITY_FIELDS + XTECH_TRIPTYCH_FIELDS
+
 
 class Report:
     def __init__(self) -> None:
@@ -160,6 +224,164 @@ def segment_shots(block: str, shot_matches: list[re.Match]) -> list[tuple[int, s
     return segs
 
 
+def segment_xtech_infer_between_blocks(text: str) -> list[str]:
+    """把每个 X-TECH INFER-BETWEEN CLIP 专用块切出来（到下一个标记或下一个 ## Clip 标题为止）。"""
+    markers = list(XTECH_MARKER_RE.finditer(text))
+    headings = [m.start() for m in CLIP_HEADING_RE.finditer(text)]
+    blocks: list[str] = []
+    for i, marker in enumerate(markers):
+        bounds = []
+        if i + 1 < len(markers):
+            bounds.append(markers[i + 1].start())
+        bounds.extend(p for p in headings if p > marker.start())
+        end = min(bounds) if bounds else len(text)
+        blocks.append(text[marker.start():end].strip())
+    return blocks
+
+
+def _looks_placeholder(value: str) -> bool:
+    s = value.strip()
+    if not s:
+        return True
+    low = s.lower().strip("[](){} ")
+    if low in {"...", "tbd", "todo", "n/a", "na", "none", "pending", "待补", "待定"}:
+        return True
+    if s.startswith("[") and s.endswith("]") and not re.search(r"@\S|[一-鿿]{2,}|\w{4,}", s):
+        return True
+    return False
+
+
+def _xtech_labeled_value(block: str, label: str) -> str | None:
+    """取 X-Tech 块里某固定英文标签的值（到下一个已知标签/子段或块尾为止）。"""
+    stop_labels = "|".join(re.escape(x) for x in XTECH_ALL_LABELS)
+    stop_sections = "|".join(re.escape(x) for x in XTECH_SECTION_LABELS)
+    pat = re.compile(
+        rf"(?ims)^\s*{re.escape(label)}\s*[:=]\s*(.*?)"
+        rf"(?=^\s*(?:{stop_labels})\s*[:=]|^\s*(?:{stop_sections})\s*:|\Z)"
+    )
+    m = pat.search(block)
+    return m.group(1).strip() if m else None
+
+
+def _check_xtech_field(r: Report, block: str, num: int, label: str) -> str:
+    value = _xtech_labeled_value(block, label)
+    if value is None:
+        r.fail(f"X-Tech infer-between 块{num} 缺必填字段：{label}。")
+        return ""
+    if _looks_placeholder(value):
+        r.fail(f"X-Tech infer-between 块{num} 字段为空或仍是占位符：{label}。")
+    else:
+        r.ok(f"X-Tech infer-between 块{num} 含 {label}。")
+    return value
+
+
+def check_xtech_infer_between_blocks(r: Report, text: str, args: argparse.Namespace) -> int:
+    """机检 infer-between 专用块（§9 三项）。对纯标准 8-A prompt（无块、无伪装词）零报告行。"""
+    blocks = segment_xtech_infer_between_blocks(text)
+    marker_count = len(blocks)
+
+    if XTECH_DISGUISE_RE.search(text) and not marker_count:
+        r.fail(
+            "出现 infer-between/FACT-LOCK 等 X-Tech 字样却无专用 X-TECH INFER-BETWEEN CLIP 块；"
+            "不得把 Route B 伪装成标准 8-A。"
+        )
+
+    if args.expected_xtech_infer_between is not None:
+        if marker_count == args.expected_xtech_infer_between:
+            r.ok(f"X-Tech infer-between 块数 {marker_count} = 预期 {args.expected_xtech_infer_between}。")
+        else:
+            r.fail(f"X-Tech infer-between 块数 {marker_count} ≠ 预期 {args.expected_xtech_infer_between}。")
+
+    for num, block in enumerate(blocks, 1):
+        r.ok(f"X-Tech infer-between 块{num} 使用了专用块标记。")
+        if HEADER_RE.search(block) or SHOT_RE.search(block):
+            r.fail(
+                f"X-Tech infer-between 块{num} 混入标准 8-A 表头/分镜时段；"
+                f"单 Clip 只能一个结构（单 prompt 不混松严）。"
+            )
+
+        for section in XTECH_SECTION_LABELS:
+            if re.search(rf"(?im)^\s*{re.escape(section)}\s*:", block):
+                r.ok(f"X-Tech infer-between 块{num} 含子段 {section}。")
+            else:
+                r.fail(f"X-Tech infer-between 块{num} 缺子段 {section}。")
+
+        fact = {label: _check_xtech_field(r, block, num, label) for label in XTECH_FACT_FIELDS}
+        authority = {label: _check_xtech_field(r, block, num, label) for label in XTECH_AUTHORITY_FIELDS}
+        triptych = {label: _check_xtech_field(r, block, num, label) for label in XTECH_TRIPTYCH_FIELDS}
+
+        scene_value = fact["SCENE / ENVIRONMENT REFERENCE"]
+        if scene_value and IMAGE_REF_RE.search(scene_value):
+            r.ok(f"X-Tech infer-between 块{num} FACT-LOCK 含 Clip 级场景图引用。")
+        else:
+            r.fail(f"X-Tech infer-between 块{num} FACT-LOCK 缺 Clip 级 @图片N 场景/环境引用。")
+
+        population_value = fact["POPULATION STATE"]
+        if population_value and XTECH_POPULATION_RE.search(population_value):
+            r.ok(f"X-Tech infer-between 块{num} FACT-LOCK 含明确场景人口状态。")
+        else:
+            r.fail(
+                f"X-Tech infer-between 块{num} FACT-LOCK 缺明确场景人口状态"
+                f"（无人物/仅命名角色/背景群像）。"
+            )
+
+        no_invention_value = fact["NO INVENTION"]
+        if len(NO_INVENTION_RE.findall(no_invention_value or "")) >= 3:
+            r.ok(f"X-Tech infer-between 块{num} FACT-LOCK 含 no-invention 约束。")
+        else:
+            r.fail(
+                f"X-Tech infer-between 块{num} FACT-LOCK no-invention 不完整；"
+                f"须禁新增角色/地点/道具/剧情事件/台词与改身份。"
+            )
+
+        key_beats_value = fact["KEY BEATS"]
+        beats = [ln.strip(" -*\t") for ln in re.split(r"[\n;；]+", key_beats_value or "") if ln.strip(" -*\t")]
+        if 1 <= len(beats) <= 3:
+            r.ok(f"X-Tech infer-between 块{num} 锁了 {len(beats)} 个关键 beat。")
+        elif key_beats_value:
+            r.fail(f"X-Tech infer-between 块{num} 须锁 1~3 个关键 beat；实为 {len(beats)} 个。")
+
+        inference_value = fact["INFERENCE SCOPE"]
+        gen_dir = _xtech_labeled_value(block, "GENERATION DIRECTION") or ""
+        if INFERENCE_SCOPE_RE.search(inference_value or ""):
+            r.ok(f"X-Tech infer-between 块{num} 放权范围限定在允许的动作/运镜空隙。")
+        else:
+            r.fail(
+                f"X-Tech infer-between 块{num} 放权范围未限定为只推断"
+                f"动作/过渡/运镜/情绪节奏/动量。"
+            )
+        if INFERENCE_SCOPE_RE.search(gen_dir) and NO_INVENTION_RE.search(gen_dir):
+            r.ok(f"X-Tech infer-between 块{num} GENERATION DIRECTION 重申了只推断 + 不发明限制。")
+        else:
+            r.fail(
+                f"X-Tech infer-between 块{num} GENERATION DIRECTION 须重申只推断范围"
+                f"+ 不新增/不改身份限制。"
+            )
+
+        structure_value = authority["STRUCTURE AUTHORITY"]
+        if re.search(r"\b(?:Route\s*B|infer-between|Triptych)\b", structure_value or "", re.I):
+            r.ok(f"X-Tech infer-between 块{num} STRUCTURE AUTHORITY 声明了 Route B/infer-between 结构权威。")
+        else:
+            r.fail(
+                f"X-Tech infer-between 块{num} STRUCTURE AUTHORITY 须点名 "
+                f"Route B / OAK Triptych / infer-between。"
+            )
+
+        for label, value in triptych.items():
+            if value and IMAGE_REF_RE.search(value):
+                r.info(f"X-Tech infer-between 块{num} {label} 引用了图片槽。")
+
+        internal_hits = sorted(set(m.group(0) for m in XTECH_INTERNAL_CODE_RE.finditer(block)))
+        if internal_hits:
+            r.fail(
+                f"X-Tech infer-between 块{num} 在最终正文暴露内部 FACS/IPA/Laban/AU 编码："
+                + "、".join(internal_hits[:10])
+                + "（除非是单独的技术分析交付件，否则这些编码不进正文）。"
+            )
+
+    return marker_count
+
+
 def validate(text: str, args: argparse.Namespace) -> Report:
     r = Report()
     if not text.strip():
@@ -170,18 +392,44 @@ def validate(text: str, args: argparse.Namespace) -> Report:
     if re.search(r"生成一个由以下\s*\d+\s*个分镜组成的视频[。\.]", text):
         r.fail("黄金结构表头用了句号；『…组成的视频』后必须是冒号『：』。")
 
+    # X-Tech infer-between 机检（对纯标准 8-A 是 no-op、零报告行）；返回专用块数量
+    xtech_count = check_xtech_infer_between_blocks(r, text, args)
+
     headers = list(HEADER_RE.finditer(text))
     n_tasks = len(headers)
+    # 任务块边界：除下一个表头外，X-TECH 专用块与 ## Clip 标题也作边界
+    #（防标准 8-A 任务块吞掉后面的 infer-between Clip / 下一个 Clip 段）
+    xtech_starts = [m.start() for m in XTECH_MARKER_RE.finditer(text)]
+    clip_heading_starts = [m.start() for m in CLIP_HEADING_RE.finditer(text)]
     if not headers:
+        if xtech_count:
+            # 纯 infer-between prompt（无标准 8-A 表头）：表头/分镜断言按 0 处理，不误报"缺表头"
+            if args.expected_tasks not in (None, 0):
+                r.fail(f"标准 8-A 任务数 0 ≠ 预期 {args.expected_tasks}（--expected-tasks 只数标准 8-A 表头）。")
+            if args.expected_shots not in (None, 0):
+                r.fail(f"标准 8-A 分镜行数 0 ≠ 预期 {args.expected_shots}（--expected-shots 只数标准 8-A 分镜行）。")
+            _check_globals(r, text, args)
+            return r
         r.fail("缺官方表头：生成一个由以下N个分镜组成的视频：")
         _check_globals(r, text, args)
         return r
 
     total_shots = 0
     for idx, header in enumerate(headers, 1):
-        end = headers[idx].start() if idx < len(headers) else len(text)
+        end_candidates = []
+        if idx < len(headers):
+            end_candidates.append(headers[idx].start())
+        end_candidates.extend(p for p in xtech_starts if p > header.end())
+        end_candidates.extend(p for p in clip_heading_starts if p > header.end())
+        end = min(end_candidates) if end_candidates else len(text)
         block = text[header.end():end]
         declared = int(header.group(1))
+
+        if XTECH_DISGUISE_RE.search(block):
+            r.fail(
+                f"任务{idx} 标准 8-A 块内出现 X-Tech infer-between/FACT-LOCK 字样；"
+                f"请用独立的 X-TECH INFER-BETWEEN CLIP 块，或让该 Clip 保持严格 8-A（单 prompt 不混松严）。"
+            )
 
         if header.group("punc") in ("：", ":"):
             r.ok(f"任务{idx} 表头用冒号。")
@@ -409,6 +657,8 @@ def main(argv: list[str]) -> int:
     p.add_argument("prompt_file")
     p.add_argument("--expected-tasks", type=int, help="预期生成任务/表头数")
     p.add_argument("--expected-shots", type=int, help="预期分镜行总数")
+    p.add_argument("--expected-xtech-infer-between", type=int,
+                   help="预期专用 X-TECH INFER-BETWEEN CLIP 块数量（X-Tech infer-between 路线用）")
     p.add_argument("--ref-images", type=int)
     p.add_argument("--ref-videos", type=int)
     p.add_argument("--ref-audios", type=int)

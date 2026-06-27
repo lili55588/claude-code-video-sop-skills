@@ -4,6 +4,21 @@
 > 跨引擎规格全文见 `F:\claude长视频创作\闸10_成片逐帧视觉验收_规格草案.md`（v0.3，Claude×Codex 共识）。
 > 本闸 = **视觉验收内核 VVK 在 P9 的实例**（共用内核见 `visual-verification-kernel.md`，闸2b/闸9/闸10 同源）。
 
+## 跨根 canonical 标识（双根审片文件名统一·别名法）
+
+本闸跨根**唯一标识 = canonical ID `generated_video_visual_audit`**（人读名「闸10 / Gate10」+ 共享工具 `frame_audit.py` —— 这三者两根本就一致、无分歧）。审片 **reference 文件名两根各按本根命名惯例保留、互为别名，不强行改名**：
+
+| 维度 | 值 |
+|---|---|
+| canonical ID（跨根唯一·引用首选） | `generated_video_visual_audit` |
+| 人读名 | 闸10 / Gate10 |
+| 共享工具（两根同源） | `tools\video-frame-audit\frame_audit.py` |
+| Claude 根 reference 文件 | `references/phase9-frame-audit.md`（本文件） |
+| Codex 根 reference 文件 | `references/post-generation-video-audit.md` |
+
+**跨根引用规则**：HANDOFF / X-Tech 模块 / COLLABORATION 等**跨根场景一律用 canonical ID `generated_video_visual_audit` 指代本闸**，不写裸文件名；需落到具体文件时按上表解析目标根的别名（**替代旧的「实施前探测目标根文件名」做法**）。本根**内部**引用照常用 `phase9-frame-audit.md`。
+> 对称项：Codex 根需在其 `post-generation-video-audit.md` 顶部加等价别名注，双根才完整对齐（提案见 `X技巧资料库\双根审片文件名统一_别名法_给Codex.md`）。
+
 ## 触发（自动，非用户开口）
 
 任一 Clip 成片到手后，**回报该 Clip「已接受」/ 进 Phase9 剪辑交接前必须先过本闸**。

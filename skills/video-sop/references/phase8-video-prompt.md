@@ -162,7 +162,7 @@ python C:\Users\Administrator\.claude\skills\video-sop\scripts\validate_phase8_p
 ```
 脚本机检：表头冒号、整数时段、**首段0s+相邻段首尾相接**、任务总时长4~10s、分镜数=声明、编号连续、**逐任务@图片N从1连续**、每分镜含「镜头：」、台词后紧跟「音色：」、末尾全局要求段+语言规则、禁用词/合规名。FAIL 按报错自修再重跑。WARN（代称/疑似名人名）人工复核。详见 `validation-contracts.md`。
 > 它兜底自检闸 3/4/5/7 里能正则确定的部分；闸 1/2/6 与需语义判断的仍靠 LLM 自检。中文输出在 Windows 控制台可能乱码，看 `[PASS]/[FAIL]/RESULT` 标签与退出码即可（需可读中文可先 `$env:PYTHONUTF8=1`）。
-> 🔴 **含 `X-TECH INFER-BETWEEN CLIP`（X-Tech 质感 Clip）时别机械照跑**：严控 8-A Clip 照常机检；**infer-between Clip 不走普通 8-A 校验器**（它不认该格式、会 FAIL/报错）——改走 FACT-LOCK 人工闸（self-check 闸 7b）+ Gate10 把关，**不能用普通 8-A `RESULT: PASS` 当该 Clip 的交付门**（validator 扩展前，详见 `references/x-tech-oak-koda-workflow.md` §5.7/§9）。
+> 🔴 **含 `X-TECH INFER-BETWEEN CLIP`（X-Tech 质感 Clip）时**：严控 8-A Clip 照常机检；**infer-between Clip 现也走校验器**——加 `--expected-xtech-infer-between N` 机检专用块（FACT-LOCK 七字段 + 场景 `@图片N` + population + 不混 8-A + 无 FACS/`AU\d+` 泄漏，2026-06-27 三根对齐）；机检 `RESULT: PASS` 后仍由 self-check 闸 7b 补人工语义（beat 是否真对应剧本 / acting code 语义）+ Gate10 像素审片把关（详见 `references/x-tech-oak-koda-workflow.md` §5.7/§9）。
 
 ### 可选增强（非强制，提升生成稳定性；经即梦实测建议）
 8-A 必备的只有「冒号模板 + 整数时段 + 镜头五段 + 场景嵌入 + 音色 + 全局要求段 + 语言规则」。以下为**可选**，多镜易跳变/要更稳时加：

@@ -73,7 +73,7 @@
 - **未确认回严控**：被拒绝或未确认的候选 Clip 仍按标准严格 8-A 生成；没有高置信候选时不提 X-Tech。
 - **单 prompt 不混松严**：每条 Clip 只一个 Route（标准 8-A 或 A/B/C/D/E/F）；无单 prompt 同时写「三联画 infer-between 脑补」与「逐拍 8-A/storyboard 严执行」。
 - **Reference Authority Contract**：项目顶部有全局 Contract；换 Route 或换权威的 Clip 写了 `Contract override`；IDENTITY/STRUCTURE/STAGING/LOOK/ACTING 各且仅一个权威，无抢权（身份板与 triptych 不同时声明控 look）。
-- **infer-between Clip**：已显式标 `TEXTURE-DRIVEN`（事实驱动/带货/因果动作 Clip 留严控 8-A 或 Route D/E）；用 `X-TECH INFER-BETWEEN CLIP` 专用块、非伪 8-A 多分镜；**FACT-LOCK 七项齐**（身份/服装/标志、Clip 级场景 `@图片N`、道具白名单、population、不可发明、1~3 关键 beat、放权范围），不齐则 infer-between 阻断、回退 Phase5 或 8-A；**它豁免逐分镜 `@图片N` 机检，但 FACT-LOCK 必含场景 ref + population**；**不依赖普通 8-A `RESULT: PASS`**，走人工 FACT-LOCK 闸 + Gate10（validator 扩展前，见 `x-tech-oak-koda-workflow.md` §5.7）。
+- **infer-between Clip**：已显式标 `TEXTURE-DRIVEN`（事实驱动/带货/因果动作 Clip 留严控 8-A 或 Route D/E）；用 `X-TECH INFER-BETWEEN CLIP` 专用块、非伪 8-A 多分镜；**FACT-LOCK 七项齐**（身份/服装/标志、Clip 级场景 `@图片N`、道具白名单、population、不可发明、1~3 关键 beat、放权范围），不齐则 infer-between 阻断、回退 Phase5 或 8-A；**它豁免逐分镜 `@图片N` 机检，但 FACT-LOCK 必含场景 ref + population**；**校验器现已机检本格式**（`validate_phase8_prompt.py --expected-xtech-infer-between N`：FACT-LOCK 七字段 + 不混 8-A + FACS/`AU\d+` 拦截，2026-06-27 三根对齐）——机检兜底 + 本闸人工语义（beat 是否真对应剧本、acting code 语义）+ Gate10 像素事实，三层把关（见 `x-tech-oak-koda-workflow.md` §5.7）。
 - **Route F Extend**：串行依赖（先有 video1）、不与独立 Clip 批量并行；连续 take 连贯（地点可在 take 内变化）、非跨场景表演迁移。
 - **FACS/IPA/Laban 不进正文**：内部编码层不出现在最终 Phase8 正文（现 validator 未机检这些词，靠本闸语义守）。
 - **10s 默认**：X-Tech 的 15s 仅用户显式风险模式，未把 15s 当默认。
